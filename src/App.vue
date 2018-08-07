@@ -58,6 +58,10 @@
 <script>
 import Vue from 'vue'
 import createLog from 'localstorage-logger'
+
+//Dependeces
+import BrowserSolc from 'libs/browser-solc'
+
 //Components
 import Notify from 'components/Notify'
 import Warning from 'components/Warning'

@@ -30,6 +30,7 @@
       </v-form>
     </v-card-text>
     <v-card-actions>
+      <v-btn class="success" dark @click="process">Process</v-btn>
       <v-spacer></v-spacer>
       <v-btn class="success" dark @click="send" :disabled="notValid">{{ $t('common.confirm') }}</v-btn>
     </v-card-actions>
@@ -61,61 +62,96 @@
 </template>
 
 <script>
-import webWallet from 'libs/web-wallet'
-import server from 'libs/server'
+import webWallet from "libs/web-wallet";
+import server from "libs/server";
 
 export default {
-  data () {
+  data() {
     return {
-      code: '',
-      gasPrice: '40',
-      gasLimit: '2500000',
-      fee: '0.01',
+      code: "",
+      gasPrice: "40",
+      gasLimit: "2500000",
+      fee: "0.01",
       confirmSendDialog: false,
-      rawTx: 'loading...',
+      rawTx: "loading...",
       canSend: false,
       sending: false
-    }
+    };
   },
   computed: {
     notValid: function() {
       //@todo valid the address
-      const gasPriceCheck = /^\d+\.?\d*$/.test(this.gasPrice) && this.gasPrice > 0
-      const gasLimitCheck = /^\d+\.?\d*$/.test(this.gasLimit) && this.gasLimit > 0
-      const feeCheck = /^\d+\.?\d*$/.test(this.fee) && this.fee > 0.0001
-      return !(gasPriceCheck && gasLimitCheck && feeCheck)
+      const gasPriceCheck =
+        /^\d+\.?\d*$/.test(this.gasPrice) && this.gasPrice > 0;
+      const gasLimitCheck =
+        /^\d+\.?\d*$/.test(this.gasLimit) && this.gasLimit > 0;
+      const feeCheck = /^\d+\.?\d*$/.test(this.fee) && this.fee > 0.0001;
+      return !(gasPriceCheck && gasLimitCheck && feeCheck);
     }
   },
   methods: {
     async send() {
-      this.confirmSendDialog = true
-      const wallet = webWallet.getWallet()
+      this.confirmSendDialog = true;
+      const wallet = webWallet.getWallet();
       try {
-        this.rawTx = await wallet.generateCreateContractTx(this.code, this.gasLimit, this.gasPrice, this.fee)
-        this.canSend = true
+        this.rawTx = await wallet.generateCreateContractTx(
+          this.code,
+          this.gasLimit,
+          this.gasPrice,
+          this.fee
+        );
+        this.canSend = true;
       } catch (e) {
-        alert(e.message || e)
-        this.$root.log.error('create_contract_generate_error', e.stack || e.toString() || e)
-        this.confirmSendDialog = false
-        return false
+        alert(e.message || e);
+        this.$root.log.error(
+          "create_contract_generate_error",
+          e.stack || e.toString() || e
+        );
+        this.confirmSendDialog = false;
+        return false;
       }
     },
 
     confirmSend() {
-      const wallet = webWallet.getWallet()
-      this.sending = true
+      const wallet = webWallet.getWallet();
+      this.sending = true;
       try {
-        const txId = wallet.sendRawTx(this.rawTx)
-        this.confirmSendDialog = false
-        this.sending = false
-        this.$root.success('Successful send. You can view at ' + server.currentNode().getTxExplorerUrl(txId))
-        this.$emit('send')
+        const txId = wallet.sendRawTx(this.rawTx);
+        this.confirmSendDialog = false;
+        this.sending = false;
+        this.$root.success(
+          "Successful send. You can view at " +
+            server.currentNode().getTxExplorerUrl(txId)
+        );
+        this.$emit("send");
       } catch (e) {
-        alert(e.message || e)
-        this.$root.log.error('create_contract_post_raw_tx_error', e.response || e.stack || e.toString() || e)
-        this.confirmSendDialog = false
+        alert(e.message || e);
+        this.$root.log.error(
+          "create_contract_post_raw_tx_error",
+          e.response || e.stack || e.toString() || e
+        );
+        this.confirmSendDialog = false;
       }
+    },
+    process() {
+      let browserSolc = window.BrowserSolc;
+
+      browserSolc.getVersions(function(soljsonSources, soljsonReleases) {
+        console.log('------------------List Versions-----------------------------')
+        console.log(soljsonSources);
+        console.log(soljsonReleases);
+        console.log('------------------End List Versions-----------------------------')
+      });
+
+      browserSolc.loadVersion("soljson-v0.4.6+commit.2dabbdf0.js", compiler => {
+        let source = "contract x { function g() {} }";
+        let optimize = 1;
+        let result = compiler.compile(source, optimize);
+        console.log('------------------Result (loadVersion)-----------------------------')
+        console.log(result);
+        console.log('------------------EndResult (loadVersion)-----------------------------')
+      });
     }
   }
-}
+};
 </script>
